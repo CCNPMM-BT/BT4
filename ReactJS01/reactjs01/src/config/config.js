@@ -8,7 +8,10 @@ export const config = {
         REGISTER: '/v1/api/register',
         LOGIN: '/v1/api/login',
         USER: '/v1/api/user',
-        ACCOUNT: '/v1/api/account'
+        ACCOUNT: '/v1/api/account',
+        CATEGORIES: '/v1/api/categories',
+        PRODUCTS: '/v1/api/products',
+        CATEGORY_PRODUCTS: '/v1/api/categories'
     },
     
     // Local storage keys

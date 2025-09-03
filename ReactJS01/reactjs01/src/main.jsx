@@ -7,6 +7,9 @@ import RegisterPage from './pages/register.jsx';
 import UserPage from './pages/user.jsx';
 import HomePage from './pages/home.jsx';
 import LoginPage from './pages/login.jsx';
+import CategoriesPage from './pages/categories.jsx';
+import CategoryProductsPage from './pages/categoryProducts.jsx';
+import ProductsPage from './pages/products.jsx';
 import { AuthWrapper } from './components/context/auth.context.jsx';
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
 
@@ -22,6 +25,18 @@ const router = createBrowserRouter([
       {
         path: "user",
         element: <ProtectedRoute><UserPage /></ProtectedRoute>
+      },
+      {
+        path: "categories",
+        element: <CategoriesPage />
+      },
+      {
+        path: "category/:categoryId",
+        element: <CategoryProductsPage />
+      },
+      {
+        path: "products",
+        element: <ProductsPage />
       }
     ]
   },

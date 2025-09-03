@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { HomeOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons';
+import { HomeOutlined, UserOutlined, SettingOutlined, AppstoreOutlined, ShoppingOutlined } from '@ant-design/icons';
 import { Menu } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/auth.context.jsx';
@@ -25,17 +25,26 @@ const Header = () => {
     return (
         <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['home']}>
             <Item key="home" icon={<HomeOutlined />}>
-                <Link to="/">Home Page</Link>
+                <Link to="/">Trang chủ</Link>
+            </Item>
+            <Item key="categories" icon={<AppstoreOutlined />}>
+                <Link to="/categories">Danh mục</Link>
+            </Item>
+            <Item key="products" icon={<ShoppingOutlined />}>
+                <Link to="/products">Sản phẩm</Link>
             </Item>
             {auth.isAuthenticated ? (
-                <SubMenu key="subMenu" icon={<SettingOutlined />} title={`Welcome ${auth.user.name}`}>
+                <SubMenu key="subMenu" icon={<SettingOutlined />} title={`Xin chào ${auth.user.name}`}>
+                    <Item key="user">
+                        <Link to="/user">Quản lý người dùng</Link>
+                    </Item>
                     <Item key="logout" onClick={handleLogout}>
-                        Logout
+                        Đăng xuất
                     </Item>
                 </SubMenu>
             ) : (
                 <Item key="login" icon={<UserOutlined />}>
-                    <Link to="/login">Login</Link>
+                    <Link to="/login">Đăng nhập</Link>
                 </Item>
             )}
         </Menu>
