@@ -20,10 +20,12 @@ import {
 } from '@ant-design/icons';
 import { 
     getAllProductsApi,
-    getAllCategoriesApi
+    getAllCategoriesApi,
+    searchProductsApi
 } from '../util/apis';
 import ProductCard from '../components/common/ProductCard';
 import LazyLoading from '../components/common/LazyLoading';
+import AdvancedSearch from '../components/common/AdvancedSearch';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -42,6 +44,8 @@ const ProductsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [sortBy, setSortBy] = useState('newest');
+    const [useAdvancedSearch, setUseAdvancedSearch] = useState(false);
+    const [searchResults, setSearchResults] = useState(null);
 
     useEffect(() => {
         fetchCategories();
@@ -127,6 +131,27 @@ const ProductsPage = () => {
         console.log('Add to cart:', product);
     };
 
+    const handleAdvancedSearchResults = (results) => {
+        setSearchResults(results);
+        setProducts(results.products);
+        setCurrentPage(results.page);
+        setHasMore(results.page < results.totalPages);
+        setUseAdvancedSearch(true);
+    };
+
+    const handleAdvancedSearchLoading = (isLoading) => {
+        setLoading(isLoading);
+    };
+
+    const resetToNormalView = () => {
+        setUseAdvancedSearch(false);
+        setSearchResults(null);
+        setSearchTerm('');
+        setSelectedCategory('');
+        setSortBy('newest');
+        fetchProducts();
+    };
+
     if (loading) {
         return (
             <div style={{ textAlign: 'center', padding: '50px' }}>
@@ -174,66 +199,31 @@ const ProductsPage = () => {
 
                 {/* Header */}
                 <div>
-                    <Title level={2} style={{ margin: 0, marginBottom: '20px' }}>
-                        Tất cả sản phẩm
-                    </Title>
-                    
-                    {/* Filters */}
-                    <Row gutter={[16, 16]} align="middle">
-                        <Col xs={24} sm={12} md={8}>
-                            <Search
-                                placeholder="Tìm kiếm sản phẩm..."
-                                allowClear
-                                enterButton={<SearchOutlined />}
-                                size="large"
-                                onSearch={handleSearch}
-                                style={{ width: '100%' }}
-                            />
+                    <Row justify="space-between" align="middle" style={{ marginBottom: '20px' }}>
+                        <Col>
+                            <Title level={2} style={{ margin: 0 }}>
+                                {useAdvancedSearch ? 'Kết quả tìm kiếm' : 'Tất cả sản phẩm'}
+                            </Title>
+                            {useAdvancedSearch && searchResults && (
+                                <Text type="secondary">
+                                    Tìm thấy {searchResults.total} sản phẩm
+                                </Text>
+                            )}
                         </Col>
-                        
-                        <Col xs={12} sm={6} md={4}>
-                            <Select
-                                placeholder="Danh mục"
-                                size="large"
-                                style={{ width: '100%' }}
-                                value={selectedCategory}
-                                onChange={handleCategoryChange}
-                                allowClear
-                            >
-                                {categories.map((category) => (
-                                    <Option key={category._id} value={category._id}>
-                                        {category.name}
-                                    </Option>
-                                ))}
-                            </Select>
-                        </Col>
-                        
-                        <Col xs={12} sm={6} md={4}>
-                            <Select
-                                placeholder="Sắp xếp"
-                                size="large"
-                                style={{ width: '100%' }}
-                                value={sortBy}
-                                onChange={handleSortChange}
-                            >
-                                <Option value="newest">Mới nhất</Option>
-                                <Option value="price-low">Giá thấp đến cao</Option>
-                                <Option value="price-high">Giá cao đến thấp</Option>
-                                <Option value="rating">Đánh giá cao</Option>
-                            </Select>
-                        </Col>
-                        
-                        <Col xs={24} sm={12} md={8}>
-                            <Button 
-                                icon={<AppstoreOutlined />} 
-                                size="large"
-                                onClick={() => navigate('/categories')}
-                                style={{ width: '100%' }}
-                            >
-                                Xem theo danh mục
-                            </Button>
+                        <Col>
+                            {useAdvancedSearch && (
+                                <Button onClick={resetToNormalView}>
+                                    Xem tất cả sản phẩm
+                                </Button>
+                            )}
                         </Col>
                     </Row>
+                    
+                    {/* Advanced Search Component */}
+                    <AdvancedSearch
+                        onSearchResults={handleAdvancedSearchResults}
+                        onLoading={handleAdvancedSearchLoading}
+                    />
                 </div>
 
                 {/* Products Grid */}

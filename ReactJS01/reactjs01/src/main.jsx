@@ -10,6 +10,7 @@ import LoginPage from './pages/login.jsx';
 import CategoriesPage from './pages/categories.jsx';
 import CategoryProductsPage from './pages/categoryProducts.jsx';
 import ProductsPage from './pages/products.jsx';
+import SearchPage from './pages/search.jsx';
 import { AuthWrapper } from './components/context/auth.context.jsx';
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
 
@@ -37,6 +38,10 @@ const router = createBrowserRouter([
       {
         path: "products",
         element: <ProductsPage />
+      },
+      {
+        path: "search",
+        element: <SearchPage />
       }
     ]
   },

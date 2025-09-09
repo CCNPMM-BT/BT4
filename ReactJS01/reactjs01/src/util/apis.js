@@ -45,6 +45,59 @@ const getProductsByCategoryApi = (categoryId, page = 1, limit = 12) => {
     });
 }
 
+// Advanced Search APIs
+const searchProductsApi = (params = {}) => {
+    const {
+        q: query = '',
+        category,
+        minPrice,
+        maxPrice,
+        minDiscount,
+        maxDiscount,
+        minRating,
+        minViews,
+        tags,
+        sortBy = 'relevance',
+        sortOrder = 'desc',
+        page = 1,
+        limit = 12
+    } = params;
+
+    return axios.get(`${config.API_ENDPOINTS.BASE_URL}/search/products`, {
+        params: {
+            q: query,
+            category,
+            minPrice,
+            maxPrice,
+            minDiscount,
+            maxDiscount,
+            minRating,
+            minViews,
+            tags,
+            sortBy,
+            sortOrder,
+            page,
+            limit
+        }
+    });
+}
+
+const getSearchSuggestionsApi = (query) => {
+    return axios.get(`${config.API_ENDPOINTS.BASE_URL}/search/suggestions`, {
+        params: { q: query }
+    });
+}
+
+const getPopularSearchesApi = (limit = 10) => {
+    return axios.get(`${config.API_ENDPOINTS.BASE_URL}/search/popular`, {
+        params: { limit }
+    });
+}
+
+const getFilterOptionsApi = () => {
+    return axios.get(`${config.API_ENDPOINTS.BASE_URL}/search/filters`);
+}
+
 export {
     createUserApi, 
     loginApi, 
@@ -53,5 +106,9 @@ export {
     getCategoryByIdApi,
     getAllProductsApi,
     getProductByIdApi,
-    getProductsByCategoryApi
+    getProductsByCategoryApi,
+    searchProductsApi,
+    getSearchSuggestionsApi,
+    getPopularSearchesApi,
+    getFilterOptionsApi
 }

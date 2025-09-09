@@ -1,5 +1,6 @@
 const Product = require('../models/product');
 const Category = require('../models/category');
+const { indexProduct, updateProduct, deleteProduct } = require('../config/elasticsearch');
 
 const getProductsByCategoryService = async (categoryId, page = 1, limit = 12) => {
     try {
@@ -124,6 +125,13 @@ const createProductService = async (productData) => {
 
         await product.populate('category', 'name');
 
+        // Index to Elasticsearch
+        try {
+            await indexProduct(product);
+        } catch (esError) {
+            console.error('Failed to index product to Elasticsearch:', esError);
+        }
+
         return { EC: 0, EM: 'Create product successfully', DT: product };
     } catch (error) {
         console.log('Error in createProductService:', error);
@@ -131,9 +139,90 @@ const createProductService = async (productData) => {
     }
 };
 
+const updateProductService = async (productId, updateData) => {
+    try {
+        const product = await Product.findByIdAndUpdate(
+            productId,
+            updateData,
+            { new: true, runValidators: true }
+        ).populate('category', 'name');
+
+        if (!product) {
+            return { EC: 1, EM: 'Product not found' };
+        }
+
+        // Update in Elasticsearch
+        try {
+            await updateProduct(productId, product);
+        } catch (esError) {
+            console.error('Failed to update product in Elasticsearch:', esError);
+        }
+
+        return { EC: 0, EM: 'Update product successfully', DT: product };
+    } catch (error) {
+        console.log('Error in updateProductService:', error);
+        return { EC: -1, EM: 'Failed to update product' };
+    }
+};
+
+const deleteProductService = async (productId) => {
+    try {
+        const product = await Product.findByIdAndUpdate(
+            productId,
+            { isActive: false },
+            { new: true }
+        );
+
+        if (!product) {
+            return { EC: 1, EM: 'Product not found' };
+        }
+
+        // Delete from Elasticsearch
+        try {
+            await deleteProduct(productId);
+        } catch (esError) {
+            console.error('Failed to delete product from Elasticsearch:', esError);
+        }
+
+        return { EC: 0, EM: 'Delete product successfully', DT: product };
+    } catch (error) {
+        console.log('Error in deleteProductService:', error);
+        return { EC: -1, EM: 'Failed to delete product' };
+    }
+};
+
+const incrementProductViewsService = async (productId) => {
+    try {
+        const product = await Product.findByIdAndUpdate(
+            productId,
+            { $inc: { views: 1 } },
+            { new: true }
+        ).populate('category', 'name');
+
+        if (!product) {
+            return { EC: 1, EM: 'Product not found' };
+        }
+
+        // Update views in Elasticsearch
+        try {
+            await updateProduct(productId, product);
+        } catch (esError) {
+            console.error('Failed to update product views in Elasticsearch:', esError);
+        }
+
+        return { EC: 0, EM: 'Increment views successfully', DT: product };
+    } catch (error) {
+        console.log('Error in incrementProductViewsService:', error);
+        return { EC: -1, EM: 'Failed to increment views' };
+    }
+};
+
 module.exports = {
     getProductsByCategoryService,
     getAllProductsService,
     getProductByIdService,
-    createProductService
+    createProductService,
+    updateProductService,
+    deleteProductService,
+    incrementProductViewsService
 };

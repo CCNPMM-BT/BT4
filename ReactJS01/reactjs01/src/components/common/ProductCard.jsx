@@ -4,7 +4,7 @@ import { ShoppingCartOutlined, EyeOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
-const ProductCard = ({ product, onViewDetail, onAddToCart }) => {
+const ProductCard = ({ product, onViewDetail, onAddToCart, showHighlight = false }) => {
     const formatPrice = (price) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -85,8 +85,22 @@ const ProductCard = ({ product, onViewDetail, onAddToCart }) => {
         >
             <Space direction="vertical" size="small" style={{ width: '100%' }}>
                 <Title level={5} style={{ margin: 0, minHeight: 40 }}>
-                    {product.name}
+                    {showHighlight && product.highlight?.name ? (
+                        <span dangerouslySetInnerHTML={{ 
+                            __html: product.highlight.name[0] 
+                        }} />
+                    ) : (
+                        product.name
+                    )}
                 </Title>
+                
+                {showHighlight && product.highlight?.description && (
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                        <span dangerouslySetInnerHTML={{ 
+                            __html: product.highlight.description[0] 
+                        }} />
+                    </div>
+                )}
                 
                 <Space direction="vertical" size="small" style={{ width: '100%' }}>
                     <Space>
