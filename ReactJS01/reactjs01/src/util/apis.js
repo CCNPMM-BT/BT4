@@ -98,6 +98,33 @@ const getFilterOptionsApi = () => {
     return axios.get(`${config.API_ENDPOINTS.BASE_URL}/search/filters`);
 }
 
+// Product detail APIs
+const getRelatedProductsApi = (productId, limit = 4) => {
+    return axios.get(`${config.API_ENDPOINTS.PRODUCTS}/${productId}/related`, {
+        params: { limit }
+    });
+}
+
+const getProductReviewsApi = (productId, page = 1, limit = 10) => {
+    return axios.get(`${config.API_ENDPOINTS.PRODUCTS}/${productId}/reviews`, {
+        params: { page, limit }
+    });
+}
+
+const createProductReviewApi = (productId, rating, comment) => {
+    return axios.post(`${config.API_ENDPOINTS.PRODUCTS}/${productId}/reviews`, {
+        rating, comment
+    });
+}
+
+const toggleFavoriteApi = (productId) => {
+    return axios.post(`${config.API_ENDPOINTS.PRODUCTS}/${productId}/favorite`);
+}
+
+const checkFavoriteStatusApi = (productId) => {
+    return axios.get(`${config.API_ENDPOINTS.PRODUCTS}/${productId}/favorite-status`);
+}
+
 export {
     createUserApi, 
     loginApi, 
@@ -110,5 +137,10 @@ export {
     searchProductsApi,
     getSearchSuggestionsApi,
     getPopularSearchesApi,
-    getFilterOptionsApi
+    getFilterOptionsApi,
+    getRelatedProductsApi,
+    getProductReviewsApi,
+    createProductReviewApi,
+    toggleFavoriteApi,
+    checkFavoriteStatusApi
 }

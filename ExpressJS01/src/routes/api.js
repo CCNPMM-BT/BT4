@@ -11,7 +11,12 @@ const {
     searchProducts,
     getSearchSuggestions,
     getPopularSearches,
-    getFilterOptions
+    getFilterOptions,
+    getRelatedProducts,
+    getProductReviews,
+    createProductReview,
+    toggleFavorite,
+    checkFavoriteStatus
 } = require('../controllers/productController');
 const auth = require('../middleware/auth');
 const publicAuth = require('../middleware/publicAuth');
@@ -25,6 +30,10 @@ routerAPI.get('/categories/:id', getCategoryById);
 routerAPI.get('/products', getAllProducts);
 routerAPI.get('/products/:id', getProductById);
 routerAPI.get('/categories/:categoryId/products', getProductsByCategory);
+
+// Product detail routes (public)
+routerAPI.get('/products/:id/related', getRelatedProducts);
+routerAPI.get('/products/:id/reviews', getProductReviews);
 
 // Search routes (public)
 routerAPI.get('/search/products', searchProducts);
@@ -43,6 +52,11 @@ routerAPI.post('/register', createUser);
 routerAPI.post('/login', handleLogin);
 routerAPI.get('/user', getUser);
 routerAPI.get('/account', delay, getAccount);
+
+// User routes (cần authentication)
+routerAPI.post('/products/:id/reviews', createProductReview);
+routerAPI.post('/products/:id/favorite', toggleFavorite);
+routerAPI.get('/products/:id/favorite-status', checkFavoriteStatus);
 
 // Admin routes (cần authentication)
 routerAPI.post('/categories', createCategory);

@@ -16,7 +16,7 @@ const createUserService = async (name, email, password) => {
             name: name,
             email: email,
             password: hashPassword,
-            role: 'User'
+            role: 'user'
         });
         return result;
     } catch (error) {
@@ -33,9 +33,9 @@ const loginService = async (email, password) => {
             if (!isMatchPassword) {
                 return { EC: 1, EM: 'Email/Password không hợp lệ' };
             } else {
-                const payload = { email: user.email, name: user.name };
+                const payload = { id: user._id, email: user.email, name: user.name };
                 const access_token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
-                return { EC: 0, access_token, user: { email: user.email, name: user.name } };
+                return { EC: 0, access_token, user: { id: user._id, email: user.email, name: user.name } };
             }
         } else {
             return { EC: 1, EM: 'Email/Password không hợp lệ' };
@@ -46,13 +46,18 @@ const loginService = async (email, password) => {
     }
 };
 
-const getUserService = async () => {
+const getUserService = async (userId) => {
     try {
-        const users = await User.find();
-        return users;
+        if (userId) {
+            const user = await User.findById(userId).select('-password');
+            return { EC: 0, user };
+        } else {
+            const users = await User.find().select('-password');
+            return { EC: 0, users };
+        }
     } catch (error) {
         console.log(error);
-        return null;
+        return { EC: -1, EM: 'Failed to get user' };
     }
 };
 

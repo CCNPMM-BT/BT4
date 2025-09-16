@@ -16,11 +16,15 @@ const LoginPage = () => {
         setLoading(true);
         try {
             const res = await loginApi(values.email, values.password);
+            console.log('Login response:', res);
             if (res && res.EC === 0) {
+                console.log('Saving token to localStorage:', res.access_token);
                 localStorage.setItem('access_token', res.access_token);
+                console.log('Token saved, verifying:', localStorage.getItem('access_token'));
                 setAuth({
                     isAuthenticated: true,
                     user: {
+                        id: res.user?.id || res.id,
                         email: res.user?.email || res.email,
                         name: res.user?.name || res.name
                     }

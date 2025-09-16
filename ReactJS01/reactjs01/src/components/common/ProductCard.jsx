@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, Image, Typography, Space, Tag, Button } from 'antd';
-import { ShoppingCartOutlined, EyeOutlined } from '@ant-design/icons';
+import { Card, Image, Typography, Space, Tag, Button, Tooltip } from 'antd';
+import { ShoppingCartOutlined, EyeOutlined, HeartOutlined, FireOutlined, GiftOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -30,19 +30,34 @@ const ProductCard = ({ product, onViewDetail, onAddToCart, showHighlight = false
                         style={{ height: 200, objectFit: 'cover' }}
                         preview={false}
                     />
-                    {discount > 0 && (
-                        <Tag 
-                            color="red" 
-                            style={{ 
-                                position: 'absolute', 
-                                top: 8, 
-                                left: 8,
-                                margin: 0
-                            }}
-                        >
-                            -{discount}%
-                        </Tag>
-                    )}
+                    <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {product.isFeatured && (
+                            <Tag 
+                                color="red" 
+                                icon={<FireOutlined />}
+                                style={{ margin: 0 }}
+                            >
+                                Nổi bật
+                            </Tag>
+                        )}
+                        {product.isOnSale && (
+                            <Tag 
+                                color="orange" 
+                                icon={<GiftOutlined />}
+                                style={{ margin: 0 }}
+                            >
+                                Khuyến mãi
+                            </Tag>
+                        )}
+                        {discount > 0 && (
+                            <Tag 
+                                color="green" 
+                                style={{ margin: 0 }}
+                            >
+                                -{discount}%
+                            </Tag>
+                        )}
+                    </div>
                     {product.stock === 0 && (
                         <div style={{
                             position: 'absolute',
@@ -121,6 +136,21 @@ const ProductCard = ({ product, onViewDetail, onAddToCart, showHighlight = false
                             </Text>
                         </Space>
                     )}
+                    
+                    <Space size="small" style={{ fontSize: '12px' }}>
+                        <Tooltip title="Lượt xem">
+                            <Space size="small">
+                                <EyeOutlined />
+                                <Text type="secondary">{product.viewCount || 0}</Text>
+                            </Space>
+                        </Tooltip>
+                        <Tooltip title="Yêu thích">
+                            <Space size="small">
+                                <HeartOutlined />
+                                <Text type="secondary">{product.favoriteCount || 0}</Text>
+                            </Space>
+                        </Tooltip>
+                    </Space>
                     
                     <Text type="secondary" style={{ fontSize: '12px' }}>
                         Còn lại: {product.stock} sản phẩm

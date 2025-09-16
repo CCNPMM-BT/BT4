@@ -5,7 +5,12 @@ const {
     createProductService,
     updateProductService,
     deleteProductService,
-    incrementProductViewsService
+    incrementProductViewsService,
+    getRelatedProductsService,
+    getProductReviewsService,
+    createProductReviewService,
+    toggleFavoriteService,
+    checkFavoriteStatusService
 } = require('../services/productService');
 const elasticsearchService = require('../services/elasticsearchService');
 
@@ -181,6 +186,62 @@ const deleteProduct = async (req, res) => {
     return res.status(200).json(data);
 };
 
+// Get related products
+const getRelatedProducts = async (req, res) => {
+    const { id } = req.params;
+    const { limit = 4 } = req.query;
+    const data = await getRelatedProductsService(id, parseInt(limit));
+    return res.status(200).json(data);
+};
+
+// Get product reviews
+const getProductReviews = async (req, res) => {
+    const { id } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const data = await getProductReviewsService(id, parseInt(page), parseInt(limit));
+    return res.status(200).json(data);
+};
+
+// Create product review
+const createProductReview = async (req, res) => {
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+    const userId = req.user?.id; // Assuming user is authenticated
+    
+    if (!userId) {
+        return res.status(401).json({ EC: 1, EM: 'Authentication required' });
+    }
+    
+    const data = await createProductReviewService(id, userId, { rating, comment });
+    return res.status(200).json(data);
+};
+
+// Toggle favorite
+const toggleFavorite = async (req, res) => {
+    const { id } = req.params;
+    const userId = req.user?.id; // Assuming user is authenticated
+    
+    if (!userId) {
+        return res.status(401).json({ EC: 1, EM: 'Authentication required' });
+    }
+    
+    const data = await toggleFavoriteService(id, userId);
+    return res.status(200).json(data);
+};
+
+// Check favorite status
+const checkFavoriteStatus = async (req, res) => {
+    const { id } = req.params;
+    const userId = req.user?.id; // Assuming user is authenticated
+    
+    if (!userId) {
+        return res.status(401).json({ EC: 1, EM: 'Authentication required' });
+    }
+    
+    const data = await checkFavoriteStatusService(id, userId);
+    return res.status(200).json(data);
+};
+
 module.exports = {
     getProductsByCategory,
     getAllProducts,
@@ -191,6 +252,11 @@ module.exports = {
     searchProducts,
     getSearchSuggestions,
     getPopularSearches,
-    getFilterOptions
+    getFilterOptions,
+    getRelatedProducts,
+    getProductReviews,
+    createProductReview,
+    toggleFavorite,
+    checkFavoriteStatus
 };
 

@@ -33,6 +33,7 @@ export const AuthWrapper = (props) => {
                 setAuth({
                     isAuthenticated: true,
                     user: {
+                        id: res.user?.id || res.id,
                         email: res.user?.email || res.email,
                         name: res.user?.name || res.name
                     }

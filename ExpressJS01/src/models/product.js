@@ -40,6 +40,28 @@ const productSchema = new mongoose.Schema({
     reviewCount: {
         type: Number,
         default: 0
+    },
+    viewCount: {
+        type: Number,
+        default: 0
+    },
+    favoriteCount: {
+        type: Number,
+        default: 0
+    },
+    isFeatured: {
+        type: Boolean,
+        default: false
+    },
+    isOnSale: {
+        type: Boolean,
+        default: false
+    },
+    saleStartDate: {
+        type: Date
+    },
+    saleEndDate: {
+        type: Date
     }
 }, {
     timestamps: true
