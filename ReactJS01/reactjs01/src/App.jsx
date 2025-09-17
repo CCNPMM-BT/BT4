@@ -1,10 +1,16 @@
 import { useContext, useEffect } from 'react';
-import { Layout, Spin } from 'antd';
+import { Layout, Spin, Typography } from 'antd';
 import AppHeader from './components/layout/header.jsx';
+import Sidebar from './components/layout/Sidebar.jsx';
 import { AuthContext } from './components/context/auth.context';
+import { CartProvider } from './components/context/cart.context';
 import { Outlet } from 'react-router-dom';
+import './styles/search.css';
+import './styles/global.css';
+import './App.css';
 
-const { Header, Content } = Layout;
+const { Content } = Layout;
+const { Text } = Typography;
 
 function App() {
   const { appLoading } = useContext(AuthContext);
@@ -16,23 +22,40 @@ function App() {
   return (
     <>
       {appLoading === true ? (
-        <div style={{
+        <div className="loading-container" style={{
           position: "fixed",
           top: "50%",
           left: "50%",
-          transform: "translate(-50%, -50%)"
+          transform: "translate(-50%, -50%)",
+          zIndex: 9999,
+          background: 'white',
+          padding: 'var(--space-8)',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: 'var(--shadow-xl)'
         }}>
-          <Spin />
+          <Spin size="large" />
+          <Text type="secondary" style={{ marginTop: 'var(--space-4)' }}>
+            Đang tải ứng dụng...
+          </Text>
         </div>
       ) : (
-        <Layout>
-          <Header>
+        <CartProvider>
+          <Layout style={{ minHeight: '100vh', background: 'var(--background-light)' }}>
             <AppHeader />
-          </Header>
-          <Content>
-            <Outlet />
-          </Content>
-        </Layout>
+            <Layout>
+              <Sidebar />
+              <Content style={{ 
+                background: 'transparent',
+                minHeight: 'calc(100vh - 64px)',
+                padding: '24px'
+              }}>
+                <div className="container">
+                  <Outlet />
+                </div>
+              </Content>
+            </Layout>
+          </Layout>
+        </CartProvider>
       )}
     </>
   );

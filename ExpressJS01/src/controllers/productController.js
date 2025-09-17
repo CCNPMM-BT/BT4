@@ -1,18 +1,18 @@
 const { 
     getProductsByCategoryService, 
     getAllProductsService, 
+    advancedSearchProductsService,
+    getSearchSuggestionsService,
     getProductByIdService, 
-    createProductService,
-    updateProductService,
-    deleteProductService,
-    incrementProductViewsService,
-    getRelatedProductsService,
-    getProductReviewsService,
-    createProductReviewService,
-    toggleFavoriteService,
-    checkFavoriteStatusService
+    createProductService 
 } = require('../services/productService');
-const elasticsearchService = require('../services/elasticsearchService');
+
+const { 
+    getSimilarProducts: getSimilarProductsES,
+    getTrendingProducts: getTrendingProductsES,
+    getSearchFacets: getSearchFacetsES,
+    searchWithTypoTolerance: searchWithTypoToleranceES
+} = require('../services/elasticsearchService');
 
 const getProductsByCategory = async (req, res) => {
     const { categoryId } = req.params;
@@ -32,12 +32,6 @@ const getAllProducts = async (req, res) => {
 const getProductById = async (req, res) => {
     const { id } = req.params;
     const data = await getProductByIdService(id);
-    
-    // Increment views when product is viewed
-    if (data.EC === 0) {
-        await incrementProductViewsService(id);
-    }
-    
     return res.status(200).json(data);
 };
 
@@ -47,216 +41,130 @@ const createProduct = async (req, res) => {
     return res.status(200).json(data);
 };
 
-// Advanced search with Elasticsearch
-const searchProducts = async (req, res) => {
-    try {
-        const {
-            q: query = '',
-            category,
-            minPrice,
-            maxPrice,
-            minDiscount,
-            maxDiscount,
-            minRating,
-            minViews,
-            tags,
-            sortBy = 'relevance',
-            sortOrder = 'desc',
-            page = 1,
-            limit = 12
-        } = req.query;
+// Advanced search với Elasticsearch
+const advancedSearchProducts = async (req, res) => {
+    const {
+        query = '',
+        category = '',
+        minPrice = 0,
+        maxPrice = Number.MAX_SAFE_INTEGER,
+        minRating = 0,
+        maxRating = 5,
+        isOnSale = null,
+        isFeatured = null,
+        sortBy = 'createdAt',
+        sortOrder = 'desc',
+        page = 1,
+        limit = 12
+    } = req.query;
 
-        const filters = {
-            category,
-            minPrice: minPrice ? parseFloat(minPrice) : undefined,
-            maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
-            minDiscount: minDiscount ? parseFloat(minDiscount) : undefined,
-            maxDiscount: maxDiscount ? parseFloat(maxDiscount) : undefined,
-            minRating: minRating ? parseFloat(minRating) : undefined,
-            minViews: minViews ? parseInt(minViews) : undefined,
-            tags: tags ? tags.split(',') : undefined,
-            sortBy,
-            sortOrder
-        };
+    const searchParams = {
+        query,
+        category,
+        minPrice: parseFloat(minPrice),
+        maxPrice: parseFloat(maxPrice),
+        minRating: parseFloat(minRating),
+        maxRating: parseFloat(maxRating),
+        isOnSale: isOnSale === 'true' ? true : isOnSale === 'false' ? false : null,
+        isFeatured: isFeatured === 'true' ? true : isFeatured === 'false' ? false : null,
+        sortBy,
+        sortOrder,
+        page: parseInt(page),
+        limit: parseInt(limit)
+    };
 
-        const pagination = {
-            page: parseInt(page),
-            limit: parseInt(limit)
-        };
-
-        const result = await elasticsearchService.searchProducts(query, filters, pagination);
-        
-        return res.status(200).json({
-            success: true,
-            data: result
-        });
-    } catch (error) {
-        console.error('Search error:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Search failed',
-            error: error.message
-        });
-    }
+    const data = await advancedSearchProductsService(searchParams);
+    return res.status(200).json(data);
 };
 
 // Get search suggestions
 const getSearchSuggestions = async (req, res) => {
-    try {
-        const { q: query } = req.query;
-        
-        if (!query || query.trim().length < 2) {
-            return res.status(200).json({
-                success: true,
-                data: []
-            });
-        }
-
-        const suggestions = await elasticsearchService.getSuggestions(query.trim());
-        
+    const { q: query, limit = 10 } = req.query;
+    
+    if (!query || query.trim().length < 2) {
         return res.status(200).json({
-            success: true,
-            data: suggestions
-        });
-    } catch (error) {
-        console.error('Suggestions error:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to get suggestions',
-            error: error.message
+            EC: 0,
+            EM: 'Query too short',
+            DT: []
         });
     }
+
+    const data = await getSearchSuggestionsService(query.trim(), parseInt(limit));
+    return res.status(200).json(data);
 };
 
-// Get popular searches
-const getPopularSearches = async (req, res) => {
-    try {
-        const { limit = 10 } = req.query;
-        const popularSearches = await elasticsearchService.getPopularSearches(parseInt(limit));
-        
-        return res.status(200).json({
-            success: true,
-            data: popularSearches
-        });
-    } catch (error) {
-        console.error('Popular searches error:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to get popular searches',
-            error: error.message
-        });
-    }
+// Get similar products
+const getSimilarProducts = async (req, res) => {
+    const { id } = req.params;
+    const { limit = 6 } = req.query;
+    
+    const data = await getSimilarProductsES(id, parseInt(limit));
+    return res.status(200).json(data);
 };
 
-// Get filter options (categories, price range, etc.)
-const getFilterOptions = async (req, res) => {
-    try {
-        const [categoryStats, priceRange] = await Promise.all([
-            elasticsearchService.getCategoryStats(),
-            elasticsearchService.getPriceRange()
-        ]);
-        
+// Get trending products
+const getTrendingProducts = async (req, res) => {
+    const { limit = 10, timeRange = '7d' } = req.query;
+    
+    const data = await getTrendingProductsES(parseInt(limit), timeRange);
+    return res.status(200).json(data);
+};
+
+// Get search facets/aggregations
+const getSearchFacets = async (req, res) => {
+    const {
+        query = '',
+        category = '',
+        minPrice = 0,
+        maxPrice = Number.MAX_SAFE_INTEGER,
+        minRating = 0,
+        maxRating = 5
+    } = req.query;
+
+    const searchParams = {
+        query,
+        category,
+        minPrice: parseFloat(minPrice),
+        maxPrice: parseFloat(maxPrice),
+        minRating: parseFloat(minRating),
+        maxRating: parseFloat(maxRating)
+    };
+
+    const data = await getSearchFacetsES(searchParams);
+    return res.status(200).json(data);
+};
+
+// Search with typo tolerance
+const searchWithTypoTolerance = async (req, res) => {
+    const { q: query, limit = 12 } = req.query;
+    
+    if (!query || query.trim().length < 1) {
         return res.status(200).json({
-            success: true,
-            data: {
-                categories: categoryStats,
-                priceRange
+            EC: 0,
+            EM: 'Query required',
+            DT: {
+                products: [],
+                total: 0,
+                maxScore: 0
             }
         });
-    } catch (error) {
-        console.error('Filter options error:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to get filter options',
-            error: error.message
-        });
     }
-};
 
-const updateProduct = async (req, res) => {
-    const { id } = req.params;
-    const updateData = req.body;
-    const data = await updateProductService(id, updateData);
-    return res.status(200).json(data);
-};
-
-const deleteProduct = async (req, res) => {
-    const { id } = req.params;
-    const data = await deleteProductService(id);
-    return res.status(200).json(data);
-};
-
-// Get related products
-const getRelatedProducts = async (req, res) => {
-    const { id } = req.params;
-    const { limit = 4 } = req.query;
-    const data = await getRelatedProductsService(id, parseInt(limit));
-    return res.status(200).json(data);
-};
-
-// Get product reviews
-const getProductReviews = async (req, res) => {
-    const { id } = req.params;
-    const { page = 1, limit = 10 } = req.query;
-    const data = await getProductReviewsService(id, parseInt(page), parseInt(limit));
-    return res.status(200).json(data);
-};
-
-// Create product review
-const createProductReview = async (req, res) => {
-    const { id } = req.params;
-    const { rating, comment } = req.body;
-    const userId = req.user?.id; // Assuming user is authenticated
-    
-    if (!userId) {
-        return res.status(401).json({ EC: 1, EM: 'Authentication required' });
-    }
-    
-    const data = await createProductReviewService(id, userId, { rating, comment });
-    return res.status(200).json(data);
-};
-
-// Toggle favorite
-const toggleFavorite = async (req, res) => {
-    const { id } = req.params;
-    const userId = req.user?.id; // Assuming user is authenticated
-    
-    if (!userId) {
-        return res.status(401).json({ EC: 1, EM: 'Authentication required' });
-    }
-    
-    const data = await toggleFavoriteService(id, userId);
-    return res.status(200).json(data);
-};
-
-// Check favorite status
-const checkFavoriteStatus = async (req, res) => {
-    const { id } = req.params;
-    const userId = req.user?.id; // Assuming user is authenticated
-    
-    if (!userId) {
-        return res.status(401).json({ EC: 1, EM: 'Authentication required' });
-    }
-    
-    const data = await checkFavoriteStatusService(id, userId);
+    const data = await searchWithTypoToleranceES(query.trim(), parseInt(limit));
     return res.status(200).json(data);
 };
 
 module.exports = {
     getProductsByCategory,
     getAllProducts,
+    advancedSearchProducts,
+    getSearchSuggestions,
     getProductById,
     createProduct,
-    updateProduct,
-    deleteProduct,
-    searchProducts,
-    getSearchSuggestions,
-    getPopularSearches,
-    getFilterOptions,
-    getRelatedProducts,
-    getProductReviews,
-    createProductReview,
-    toggleFavorite,
-    checkFavoriteStatus
+    getSimilarProducts,
+    getTrendingProducts,
+    getSearchFacets,
+    searchWithTypoTolerance
 };
+
 

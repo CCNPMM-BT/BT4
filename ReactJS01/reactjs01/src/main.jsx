@@ -6,12 +6,15 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import RegisterPage from './pages/register.jsx';
 import UserPage from './pages/user.jsx';
 import HomePage from './pages/home.jsx';
-import LoginPage from './pages/login.jsx';
+import LoginPage from './pages/login-new.jsx';
 import CategoriesPage from './pages/categories.jsx';
 import CategoryProductsPage from './pages/categoryProducts.jsx';
 import ProductsPage from './pages/products.jsx';
-import ProductDetailPage from './pages/productDetail.jsx';
-import SearchPage from './pages/search.jsx';
+import FavoritesPage from './pages/favorites.jsx';
+import ViewedProductsPage from './pages/viewed-products.jsx';
+import ProductDetailPage from './pages/product-detail-new.jsx';
+import CartPage from './pages/cart.jsx';
+import NotFound from './pages/NotFound.jsx';
 import { AuthWrapper } from './components/context/auth.context.jsx';
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
 
@@ -45,8 +48,16 @@ const router = createBrowserRouter([
         element: <ProductDetailPage />
       },
       {
-        path: "search",
-        element: <SearchPage />
+        path: "favorites",
+        element: <ProtectedRoute><FavoritesPage /></ProtectedRoute>
+      },
+      {
+        path: "viewed-products",
+        element: <ProtectedRoute><ViewedProductsPage /></ProtectedRoute>
+      },
+      {
+        path: "cart",
+        element: <ProtectedRoute><CartPage /></ProtectedRoute>
       }
     ]
   },
@@ -57,6 +68,10 @@ const router = createBrowserRouter([
   {
     path: "/register",
     element: <RegisterPage />
+  },
+  {
+    path: "*",
+    element: <NotFound />
   }
 ]);
 

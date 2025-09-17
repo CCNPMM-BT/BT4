@@ -45,84 +45,134 @@ const getProductsByCategoryApi = (categoryId, page = 1, limit = 12) => {
     });
 }
 
-// Advanced Search APIs
-const searchProductsApi = (params = {}) => {
-    const {
-        q: query = '',
-        category,
-        minPrice,
-        maxPrice,
-        minDiscount,
-        maxDiscount,
-        minRating,
-        minViews,
-        tags,
-        sortBy = 'relevance',
-        sortOrder = 'desc',
-        page = 1,
-        limit = 12
-    } = params;
-
-    return axios.get(`${config.API_ENDPOINTS.BASE_URL}/search/products`, {
-        params: {
-            q: query,
-            category,
-            minPrice,
-            maxPrice,
-            minDiscount,
-            maxDiscount,
-            minRating,
-            minViews,
-            tags,
-            sortBy,
-            sortOrder,
-            page,
-            limit
-        }
+// Advanced search API với Elasticsearch
+const advancedSearchProductsApi = (searchParams) => {
+    return axios.get(`${config.API_ENDPOINTS.PRODUCTS}/search`, {
+        params: searchParams
     });
 }
 
-const getSearchSuggestionsApi = (query) => {
-    return axios.get(`${config.API_ENDPOINTS.BASE_URL}/search/suggestions`, {
-        params: { q: query }
+// Get search suggestions API
+const getSearchSuggestionsApi = (query, limit = 10) => {
+    return axios.get(`${config.API_ENDPOINTS.PRODUCTS}/suggestions`, {
+        params: { q: query, limit }
     });
 }
 
-const getPopularSearchesApi = (limit = 10) => {
-    return axios.get(`${config.API_ENDPOINTS.BASE_URL}/search/popular`, {
+// Get similar products API
+const getSimilarProductsApi = (productId, limit = 6) => {
+    return axios.get(`${config.API_ENDPOINTS.PRODUCTS}/similar/${productId}`, {
         params: { limit }
     });
 }
 
-const getFilterOptionsApi = () => {
-    return axios.get(`${config.API_ENDPOINTS.BASE_URL}/search/filters`);
+// Favorite products APIs
+const addToFavoritesApi = (productId) => {
+    return axios.post(`${config.API_ENDPOINTS.FAVORITES}/${productId}`);
 }
 
-// Product detail APIs
-const getRelatedProductsApi = (productId, limit = 4) => {
-    return axios.get(`${config.API_ENDPOINTS.PRODUCTS}/${productId}/related`, {
-        params: { limit }
-    });
+const removeFromFavoritesApi = (productId) => {
+    return axios.delete(`${config.API_ENDPOINTS.FAVORITES}/${productId}`);
 }
 
-const getProductReviewsApi = (productId, page = 1, limit = 10) => {
-    return axios.get(`${config.API_ENDPOINTS.PRODUCTS}/${productId}/reviews`, {
+const getFavoriteProductsApi = (page = 1, limit = 12) => {
+    return axios.get(config.API_ENDPOINTS.FAVORITES, {
         params: { page, limit }
     });
 }
 
-const createProductReviewApi = (productId, rating, comment) => {
-    return axios.post(`${config.API_ENDPOINTS.PRODUCTS}/${productId}/reviews`, {
-        rating, comment
+const isFavoriteApi = (productId) => {
+    return axios.get(`${config.API_ENDPOINTS.FAVORITES}/${productId}/check`);
+}
+
+// Viewed products APIs
+const addToViewedProductsApi = (productId) => {
+    return axios.post(`${config.API_ENDPOINTS.VIEWED_PRODUCTS}/${productId}`);
+}
+
+const getViewedProductsApi = (page = 1, limit = 12) => {
+    return axios.get(config.API_ENDPOINTS.VIEWED_PRODUCTS, {
+        params: { page, limit }
     });
 }
 
-const toggleFavoriteApi = (productId) => {
-    return axios.post(`${config.API_ENDPOINTS.PRODUCTS}/${productId}/favorite`);
+const removeFromViewedProductsApi = (productId) => {
+    return axios.delete(`${config.API_ENDPOINTS.VIEWED_PRODUCTS}/${productId}`);
 }
 
-const checkFavoriteStatusApi = (productId) => {
-    return axios.get(`${config.API_ENDPOINTS.PRODUCTS}/${productId}/favorite-status`);
+const clearViewedProductsApi = () => {
+    return axios.delete(config.API_ENDPOINTS.VIEWED_PRODUCTS);
+}
+
+// Comments APIs
+const createCommentApi = (productId, content, rating) => {
+    return axios.post(`${config.API_ENDPOINTS.PRODUCTS}/${productId}/comments`, {
+        content, rating
+    });
+}
+
+const getProductCommentsApi = (productId, page = 1, limit = 10) => {
+    return axios.get(`${config.API_ENDPOINTS.PRODUCTS}/${productId}/comments`, {
+        params: { page, limit }
+    });
+}
+
+const updateCommentApi = (commentId, content, rating) => {
+    return axios.put(`${config.API_ENDPOINTS.COMMENTS}/${commentId}`, {
+        content, rating
+    });
+}
+
+const deleteCommentApi = (commentId) => {
+    return axios.delete(`${config.API_ENDPOINTS.COMMENTS}/${commentId}`);
+}
+
+const toggleCommentLikeApi = (commentId) => {
+    return axios.post(`${config.API_ENDPOINTS.COMMENTS}/${commentId}/like`);
+}
+
+// Purchase APIs
+const createPurchaseApi = (purchaseData) => {
+    return axios.post(config.API_ENDPOINTS.PURCHASES, purchaseData);
+}
+
+const getUserPurchasesApi = (page = 1, limit = 10) => {
+    return axios.get(config.API_ENDPOINTS.PURCHASES, {
+        params: { page, limit }
+    });
+}
+
+const getProductPurchaseStatsApi = (productId) => {
+    return axios.get(`${config.API_ENDPOINTS.PRODUCTS}/${productId}/purchase-stats`);
+}
+
+// Cart APIs
+const getCartApi = () => {
+    return axios.get(config.API_ENDPOINTS.CART);
+}
+
+const addToCartApi = (productId, quantity = 1) => {
+    return axios.post(config.API_ENDPOINTS.CART_ADD, {
+        productId, quantity
+    });
+}
+
+const updateCartItemApi = (productId, quantity) => {
+    return axios.put(config.API_ENDPOINTS.CART_UPDATE, {
+        productId, quantity
+    });
+}
+
+const removeFromCartApi = (productId) => {
+    return axios.delete(`${config.API_ENDPOINTS.CART_REMOVE}/${productId}`);
+}
+
+const clearCartApi = () => {
+    return axios.delete(config.API_ENDPOINTS.CART_CLEAR);
+}
+
+const getCartCountApi = () => {
+    return axios.get(config.API_ENDPOINTS.CART_COUNT);
 }
 
 export {
@@ -134,13 +184,30 @@ export {
     getAllProductsApi,
     getProductByIdApi,
     getProductsByCategoryApi,
-    searchProductsApi,
+    advancedSearchProductsApi,
     getSearchSuggestionsApi,
-    getPopularSearchesApi,
-    getFilterOptionsApi,
-    getRelatedProductsApi,
-    getProductReviewsApi,
-    createProductReviewApi,
-    toggleFavoriteApi,
-    checkFavoriteStatusApi
+    getSimilarProductsApi,
+    addToFavoritesApi,
+    removeFromFavoritesApi,
+    getFavoriteProductsApi,
+    isFavoriteApi,
+    addToViewedProductsApi,
+    getViewedProductsApi,
+    removeFromViewedProductsApi,
+    clearViewedProductsApi,
+    createCommentApi,
+    getProductCommentsApi,
+    updateCommentApi,
+    deleteCommentApi,
+    toggleCommentLikeApi,
+    createPurchaseApi,
+    getUserPurchasesApi,
+    getProductPurchaseStatsApi,
+    // Cart APIs
+    getCartApi,
+    addToCartApi,
+    updateCartItemApi,
+    removeFromCartApi,
+    clearCartApi,
+    getCartCountApi
 }

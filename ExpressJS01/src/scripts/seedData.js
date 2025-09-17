@@ -9,22 +9,22 @@ const categories = [
     {
         name: 'Điện thoại',
         description: 'Các loại điện thoại thông minh',
-        image: 'https://via.placeholder.com/300x200?text=Phone'
+        image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&h=400&fit=crop&crop=center'
     },
     {
         name: 'Laptop',
         description: 'Máy tính xách tay',
-        image: 'https://via.placeholder.com/300x200?text=Laptop'
+        image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&h=400&fit=crop&crop=center'
     },
     {
         name: 'Phụ kiện',
         description: 'Các phụ kiện điện tử',
-        image: 'https://via.placeholder.com/300x200?text=Accessories'
+        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=400&fit=crop&crop=center'
     },
     {
         name: 'Đồng hồ',
         description: 'Đồng hồ thông minh và đồng hồ đeo tay',
-        image: 'https://via.placeholder.com/300x200?text=Watch'
+        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=400&fit=crop&crop=center'
     }
 ];
 
@@ -539,3 +539,5 @@ const seedData = async () => {
 };
 
 seedData();
+
+

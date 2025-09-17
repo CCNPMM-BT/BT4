@@ -9,7 +9,8 @@ const dbState = [
 ];
 
 const connection = async () => {
-    await mongoose.connect(process.env.MONGO_DB_URL);
+    const mongoUrl = process.env.MONGO_DB_URL || process.env.MONGODB_URI || 'mongodb://localhost:27017/expressjs01';
+    await mongoose.connect(mongoUrl);
     const state = Number(mongoose.connection.readyState);
     console.log(dbState.find(f => f.value === state).label, 'to database');
 };

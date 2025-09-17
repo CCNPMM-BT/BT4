@@ -1,214 +1,205 @@
-const { Client } = require('elasticsearch');
+const { Client } = require('@elastic/elasticsearch');
 
+// Cấu hình Elasticsearch client
 const client = new Client({
-    host: process.env.ELASTICSEARCH_URL || 'localhost:9200',
-    log: 'error'
+    node: process.env.ELASTICSEARCH_URL || 'http://localhost:9200',
+    auth: {
+        username: process.env.ELASTICSEARCH_USERNAME || 'elastic',
+        password: process.env.ELASTICSEARCH_PASSWORD || 'changeme'
+    },
+    // Tùy chọn cho development
+    requestTimeout: 30000,
+    maxRetries: 3,
+    resurrectStrategy: 'ping'
 });
 
-// Test connection
-const testConnection = async () => {
-    try {
-        const response = await client.ping();
-        console.log('Elasticsearch connected successfully');
-        return true;
-    } catch (error) {
-        console.error('Elasticsearch connection failed:', error.message);
-        return false;
+// Tên index cho products
+const PRODUCTS_INDEX = 'products';
+
+// Mapping cho products index với đầy đủ tính năng tìm kiếm
+const productsMapping = {
+    mappings: {
+        properties: {
+            name: {
+                type: 'text',
+                analyzer: 'vietnamese_analyzer',
+                fields: {
+                    keyword: {
+                        type: 'keyword'
+                    },
+                    suggest: {
+                        type: 'completion',
+                        analyzer: 'simple',
+                        search_analyzer: 'simple',
+                        preserve_separators: true,
+                        preserve_position_increments: true,
+                        max_input_length: 50
+                    },
+                    autocomplete: {
+                        type: 'text',
+                        analyzer: 'autocomplete_analyzer',
+                        search_analyzer: 'autocomplete_search_analyzer'
+                    }
+                }
+            },
+            description: {
+                type: 'text',
+                analyzer: 'vietnamese_analyzer',
+                fields: {
+                    keyword: {
+                        type: 'keyword'
+                    }
+                }
+            },
+            price: {
+                type: 'float'
+            },
+            originalPrice: {
+                type: 'float'
+            },
+            discount: {
+                type: 'float'
+            },
+            category: {
+                type: 'keyword'
+            },
+            categoryName: {
+                type: 'text',
+                analyzer: 'vietnamese_analyzer',
+                fields: {
+                    keyword: {
+                        type: 'keyword'
+                    },
+                    suggest: {
+                        type: 'completion',
+                        analyzer: 'simple',
+                        search_analyzer: 'simple'
+                    }
+                }
+            },
+            stock: {
+                type: 'integer'
+            },
+            rating: {
+                type: 'float'
+            },
+            reviewCount: {
+                type: 'integer'
+            },
+            viewCount: {
+                type: 'integer'
+            },
+            purchaseCount: {
+                type: 'integer'
+            },
+            commentCount: {
+                type: 'integer'
+            },
+            favoriteCount: {
+                type: 'integer'
+            },
+            tags: {
+                type: 'keyword',
+                fields: {
+                    suggest: {
+                        type: 'completion',
+                        analyzer: 'simple',
+                        search_analyzer: 'simple'
+                    }
+                }
+            },
+            isActive: {
+                type: 'boolean'
+            },
+            isFeatured: {
+                type: 'boolean'
+            },
+            isOnSale: {
+                type: 'boolean'
+            },
+            createdAt: {
+                type: 'date'
+            },
+            updatedAt: {
+                type: 'date'
+            }
+        }
+    },
+    settings: {
+        number_of_shards: 1,
+        number_of_replicas: 0,
+        analysis: {
+            analyzer: {
+                vietnamese_analyzer: {
+                    type: 'custom',
+                    tokenizer: 'standard',
+                    filter: ['lowercase', 'asciifolding', 'vietnamese_stop']
+                },
+                autocomplete_analyzer: {
+                    type: 'custom',
+                    tokenizer: 'autocomplete_tokenizer',
+                    filter: ['lowercase', 'asciifolding']
+                },
+                autocomplete_search_analyzer: {
+                    type: 'custom',
+                    tokenizer: 'keyword',
+                    filter: ['lowercase', 'asciifolding']
+                }
+            },
+            tokenizer: {
+                autocomplete_tokenizer: {
+                    type: 'edge_ngram',
+                    min_gram: 1,
+                    max_gram: 20,
+                    token_chars: ['letter', 'digit']
+                }
+            },
+            filter: {
+                vietnamese_stop: {
+                    type: 'stop',
+                    stopwords: ['và', 'của', 'cho', 'với', 'từ', 'trong', 'có', 'được', 'là', 'một', 'các', 'như', 'để', 'này', 'đó', 'khi', 'nếu', 'vì', 'sau', 'trước', 'trên', 'dưới', 'giữa', 'ngoài', 'trong', 'ngoài', 'về', 'theo', 'qua', 'bằng', 'bởi', 'do', 'tại', 'ở', 'vào', 'ra', 'lên', 'xuống', 'qua', 'lại', 'về', 'đến', 'từ', 'của', 'cho', 'với', 'và', 'hoặc', 'nhưng', 'mà', 'nên', 'để', 'để', 'mà', 'nếu', 'khi', 'vì', 'sau', 'trước', 'trên', 'dưới', 'giữa', 'ngoài', 'trong', 'ngoài', 'về', 'theo', 'qua', 'bằng', 'bởi', 'do', 'tại', 'ở', 'vào', 'ra', 'lên', 'xuống', 'qua', 'lại', 'về', 'đến', 'từ']
+                }
+            }
+        }
     }
 };
 
-// Create product index with mapping
-const createProductIndex = async () => {
-    const indexName = 'products';
-    
+// Khởi tạo index nếu chưa tồn tại
+const initializeIndex = async () => {
     try {
-        // Check if index exists
-        const exists = await client.indices.exists({ index: indexName });
+        const exists = await client.indices.exists({ index: PRODUCTS_INDEX });
         
         if (!exists) {
             await client.indices.create({
-                index: indexName,
-                body: {
-                    mappings: {
-                        properties: {
-                            name: {
-                                type: 'text',
-                                analyzer: 'standard',
-                                fields: {
-                                    keyword: {
-                                        type: 'keyword'
-                                    },
-                                    suggest: {
-                                        type: 'completion'
-                                    }
-                                }
-                            },
-                            description: {
-                                type: 'text',
-                                analyzer: 'standard'
-                            },
-                            price: {
-                                type: 'float'
-                            },
-                            originalPrice: {
-                                type: 'float'
-                            },
-                            category: {
-                                type: 'keyword'
-                            },
-                            categoryName: {
-                                type: 'text',
-                                analyzer: 'standard'
-                            },
-                            stock: {
-                                type: 'integer'
-                            },
-                            isActive: {
-                                type: 'boolean'
-                            },
-                            tags: {
-                                type: 'keyword'
-                            },
-                            rating: {
-                                type: 'float'
-                            },
-                            reviewCount: {
-                                type: 'integer'
-                            },
-                            discount: {
-                                type: 'float'
-                            },
-                            views: {
-                                type: 'integer',
-                                default: 0
-                            },
-                            createdAt: {
-                                type: 'date'
-                            },
-                            updatedAt: {
-                                type: 'date'
-                            }
-                        }
-                    },
-                    settings: {
-                        analysis: {
-                            analyzer: {
-                                vietnamese_analyzer: {
-                                    type: 'custom',
-                                    tokenizer: 'standard',
-                                    filter: ['lowercase', 'asciifolding']
-                                }
-                            }
-                        }
-                    }
-                }
+                index: PRODUCTS_INDEX,
+                body: productsMapping
             });
-            console.log(`Index '${indexName}' created successfully`);
+            console.log(`✅ Created Elasticsearch index: ${PRODUCTS_INDEX}`);
         } else {
-            console.log(`Index '${indexName}' already exists`);
+            console.log(`✅ Elasticsearch index already exists: ${PRODUCTS_INDEX}`);
         }
     } catch (error) {
-        console.error('Error creating index:', error);
+        console.error('❌ Error initializing Elasticsearch index:', error);
+        throw error;
     }
 };
 
-// Index a product document
-const indexProduct = async (product) => {
+// Kiểm tra kết nối Elasticsearch
+const checkConnection = async () => {
     try {
-        const doc = {
-            ...product,
-            category: product.category._id || product.category,
-            categoryName: product.category.name || '',
-            discount: product.originalPrice ? 
-                ((product.originalPrice - product.price) / product.originalPrice * 100) : 0
-        };
-        
-        await client.index({
-            index: 'products',
-            id: product._id.toString(),
-            body: doc
-        });
-        
-        console.log(`Product ${product._id} indexed successfully`);
+        const response = await client.ping();
+        console.log('✅ Elasticsearch connection successful');
+        return true;
     } catch (error) {
-        console.error('Error indexing product:', error);
-    }
-};
-
-// Bulk index products
-const bulkIndexProducts = async (products) => {
-    try {
-        const body = [];
-        
-        products.forEach(product => {
-            const doc = {
-                ...product,
-                category: product.category._id || product.category,
-                categoryName: product.category.name || '',
-                discount: product.originalPrice ? 
-                    ((product.originalPrice - product.price) / product.originalPrice * 100) : 0
-            };
-            
-            body.push({
-                index: {
-                    _index: 'products',
-                    _id: product._id.toString()
-                }
-            });
-            body.push(doc);
-        });
-        
-        if (body.length > 0) {
-            await client.bulk({ body });
-            console.log(`${products.length} products indexed successfully`);
-        }
-    } catch (error) {
-        console.error('Error bulk indexing products:', error);
-    }
-};
-
-// Delete product from index
-const deleteProduct = async (productId) => {
-    try {
-        await client.delete({
-            index: 'products',
-            id: productId.toString()
-        });
-        console.log(`Product ${productId} deleted from index`);
-    } catch (error) {
-        console.error('Error deleting product from index:', error);
-    }
-};
-
-// Update product in index
-const updateProduct = async (productId, product) => {
-    try {
-        const doc = {
-            ...product,
-            category: product.category._id || product.category,
-            categoryName: product.category.name || '',
-            discount: product.originalPrice ? 
-                ((product.originalPrice - product.price) / product.originalPrice * 100) : 0
-        };
-        
-        await client.index({
-            index: 'products',
-            id: productId.toString(),
-            body: doc
-        });
-        
-        console.log(`Product ${productId} updated in index`);
-    } catch (error) {
-        console.error('Error updating product in index:', error);
+        console.error('❌ Elasticsearch connection failed:', error);
+        return false;
     }
 };
 
 module.exports = {
     client,
-    testConnection,
-    createProductIndex,
-    indexProduct,
-    bulkIndexProducts,
-    deleteProduct,
-    updateProduct
+    PRODUCTS_INDEX,
+    initializeIndex,
+    checkConnection
 };
+

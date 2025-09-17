@@ -45,9 +45,11 @@ const productSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    favoriteCount: {
+    discount: {
         type: Number,
-        default: 0
+        default: 0,
+        min: 0,
+        max: 100
     },
     isFeatured: {
         type: Boolean,
@@ -57,17 +59,47 @@ const productSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    saleStartDate: {
-        type: Date
+    purchaseCount: {
+        type: Number,
+        default: 0,
+        min: 0
     },
-    saleEndDate: {
-        type: Date
+    commentCount: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    favoriteCount: {
+        type: Number,
+        default: 0,
+        min: 0
     }
 }, {
     timestamps: true
 });
 
+// Virtual field để tính discount percentage
+productSchema.virtual('discountPercentage').get(function() {
+    if (this.originalPrice && this.originalPrice > this.price) {
+        return Math.round(((this.originalPrice - this.price) / this.originalPrice) * 100);
+    }
+    return 0;
+});
+
+// Middleware để tự động cập nhật discount và isOnSale
+productSchema.pre('save', function(next) {
+    if (this.originalPrice && this.originalPrice > this.price) {
+        this.discount = Math.round(((this.originalPrice - this.price) / this.originalPrice) * 100);
+        this.isOnSale = true;
+    } else {
+        this.discount = 0;
+        this.isOnSale = false;
+    }
+    next();
+});
+
 const Product = mongoose.model('Product', productSchema);
 
 module.exports = Product;
+
 

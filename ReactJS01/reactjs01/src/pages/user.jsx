@@ -11,8 +11,10 @@ const UserPage = () => {
             try {
                 setLoading(true);
                 const res = await getUserApi();
-                if (res && res.EC === 0) {
-                    setDataSource(res.data || res);
+                if (res && (res.EC === 0 || res.success === true)) {
+                    const raw = res?.data ?? res?.DT ?? res?.users ?? res?.items ?? res;
+                    const arrayData = Array.isArray(raw) ? raw : [];
+                    setDataSource(arrayData);
                 } else {
                     notification.error({
                         message: 'Error',
